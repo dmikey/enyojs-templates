@@ -19,7 +19,7 @@ fs.readFile('test/test.tpl.html', 'utf8', function (err, data) {
   
   //current working kind
   var current = {};
-  var lastParent = {};
+  var lastParent = [];
     
   //parse the HTML
   var parser = new htmlparser.Parser({
@@ -31,7 +31,7 @@ fs.readFile('test/test.tpl.html', 'utf8', function (err, data) {
             if(open > 0) {
                 current.components = current.components || [];
                 current.components.push(kind);
-                lastParent = current;
+                lastParent.push(current);
                 current = kind;
             } else {
                 //push the kind if we're not inside an open tag
@@ -42,16 +42,23 @@ fs.readFile('test/test.tpl.html', 'utf8', function (err, data) {
             open ++;
         },
         ontext: function(text){
-           
+           //remove new lines and extra spaces 
+            var t = text.replace(/(\r\n|\n|\r)/gm,"").trim();
+            if(t.length > 0){
+                current.content = t;
+            }
         },
         onclosetag: function(tagname){
             //reduce the number of tags open
             open --;
+            
             //set the current tag to the last open
             if(open <= 0) { 
                 current = components[root];
             } else {
-                current = lastParent;
+                
+                current = lastParent[lastParent.length - 1];
+                lastParent.pop();
             }
         },
         onend: function(){
